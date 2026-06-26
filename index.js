@@ -12,7 +12,10 @@ require("dotenv").config();
 console.log("🔥 ALASKA SYSTEMS CONTRACT BOT ONLINE");
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds],
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMembers,
+  ],
 });
 
 // ─── Duplicate-interaction guard ─────────────────────────────────────────────
@@ -44,6 +47,31 @@ async function safeError(interaction, message = "An error occurred.") {
 // ─── READY ────────────────────────────────────────────────────────────────────
 client.once(Events.ClientReady, () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
+});
+
+// ─── WELCOME NEW MEMBERS ──────────────────────────────────────────────────────
+client.on(Events.GuildMemberAdd, async (member) => {
+  try {
+    const channel = member.guild.channels.cache.get('1491998338630025348');
+    if (!channel) return console.warn('⚠️ Welcome channel not found');
+
+    const welcomeEmbed = new EmbedBuilder()
+      .setTitle('✈️ 𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐭𝐨 𝐀𝐥𝐚𝐬𝐤𝐚 𝐀𝐢𝐫𝐥𝐢𝐧𝐞𝐬 𝐕𝐢𝐫𝐭𝐮𝐚𝐥!')
+      .setDescription(
+        `Welcome aboard <@${member.id}>! We are thrilled to have you join our flight operations. Whether you are a seasoned captain or a new cadet, you've found your home in the skies.\n\nPlease review the pre-flight briefing below to get started.\n\n\n📋 **__𝗣𝗥𝗘-𝗙𝗟𝗜𝗚𝗛𝗧 𝗖𝗛𝗘𝗖𝗞𝗟𝗜𝗦𝗧__**\n\n1. 𝐎𝐏𝐄𝐑𝐀𝐓𝐈𝐍𝐆 𝐏𝐑𝐎𝐂𝐄𝐃𝐔𝐑𝐄𝐒\nHead over to <#1491998338630025348> for more information.\n\n2. 𝐑𝐀𝐃𝐈𝐎 𝐂𝐇𝐄𝐂𝐊\nIntroduce yourself in our <#1491959580173930689> and let us know you've arrived!\n\n\n🌐 **__𝗢𝗨𝗥 𝗣𝗨𝗥𝗣𝗢𝗦𝗘__**\nTo provide the most realistic and professional virtual airline experience, honoring the legacy of the Great North.`
+      )
+      .setColor(15822)
+      .setThumbnail('https://i.postimg.cc/L6GmP9HR/asaksa-new.png')
+      .setFooter({
+        text: 'Fly Smart. Land Safe. | Alaska Airlines Virtual',
+        iconURL: 'https://i.postimg.cc/L6GmP9HR/asaksa-new.png',
+      });
+
+    await channel.send({ embeds: [welcomeEmbed] });
+    console.log(`✅ Welcome sent for ${member.user.tag}`);
+  } catch (err) {
+    console.error('❌ Error sending welcome message:', err);
+  }
 });
 
 // ─── INTERACTION HANDLER ──────────────────────────────────────────────────────

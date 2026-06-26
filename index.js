@@ -240,4 +240,4 @@ client.on(Events.InteractionCreate, async (interaction) => {
 process.on("SIGTERM", function() { client.destroy(); process.exit(0); });
 process.on("SIGINT",  function() { client.destroy(); process.exit(0); });
 
-client.l
+client.login(process.env.TOKEN);

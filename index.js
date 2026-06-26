@@ -168,31 +168,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
     return;
   }
 
-  if (interaction.isChatInputCommand() && interaction.commandName === "testwelcome") {
-    try {
-      await safeDefer(interaction);
-    } catch (err) {
-      console.error("Failed to defer testwelcome:", err);
-      return;
-    }
-
-    try {
-      const channel = interaction.guild.channels.cache.get("1491998338630025348");
-      if (!channel) {
-        await interaction.editReply({ content: "Welcome channel not found." });
-        return;
-      }
-      await channel.send({ embeds: [buildWelcomeEmbed(interaction.user.id)] });
-      await interaction.editReply({ content: "Welcome embed sent!" });
-      console.log("Test welcome sent");
-    } catch (err) {
-      console.error("Error sending test welcome:", err);
-      await safeError(interaction, "Failed to send test welcome.");
-    }
-
-    return;
-  }
-
   if (interaction.isButton() && interaction.customId.startsWith("claim_")) {
     try {
       await safeDeferUpdate(interaction);

@@ -31,10 +31,6 @@ const commands = [
     .setName("postrules")
     .setDescription("Post the Alaska Airlines Virtual community rules"),
 
-  new SlashCommandBuilder()
-    .setName("testwelcome")
-    .setDescription("Test the welcome embed"),
-
 ].map(function(cmd) { return cmd.toJSON(); });
 
 if (!process.env.TOKEN) {

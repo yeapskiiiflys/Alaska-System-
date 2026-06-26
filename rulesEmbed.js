@@ -52,7 +52,6 @@ Any action that disrupts the server, harms the airline's image, or negatively af
   .setFooter({
     text: 'Fly Smart. Land Safe. | Alaska Airlines Virtual',
     iconURL: 'https://i.postimg.cc/L6GmP9HR/asaksa-new.png',
-  })
-  .setTimestamp();
+  });
 
 module.exports = { rulesEmbed };

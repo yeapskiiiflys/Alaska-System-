@@ -44,6 +44,21 @@ async function safeError(interaction, message = "An error occurred.") {
   } catch {}
 }
 
+// ─── Welcome embed builder ────────────────────────────────────────────────────
+function buildWelcomeEmbed(userId) {
+  return new EmbedBuilder()
+    .setTitle('✈️ 𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐭𝐨 𝐀𝐥𝐚𝐬𝐤𝐚 𝐀𝐢𝐫𝐥𝐢𝐧𝐞𝐬 𝐕𝐢𝐫𝐭𝐮𝐚𝐥!')
+    .setDescription(
+      `Welcome aboard <@${userId}>! We are thrilled to have you join our flight operations. Whether you are a seasoned captain or a new cadet, you've found your home in the skies.\n\nPlease review the pre-flight briefing below to get started.\n\n\n📋 **__𝗣𝗥𝗘-𝗙𝗟𝗜𝗚𝗛𝗧 𝗖𝗛𝗘𝗖𝗞𝗟𝗜𝗦𝗧__**\n\n1. 𝐎𝐏𝐄𝐑𝐀𝐓𝐈𝐍𝐆 𝐏𝐑𝐎𝐂𝐄𝐃𝐔𝐑𝐄𝐒\nHead over to <#1491998338630025348> for more information.\n\n2. 𝐑𝐀𝐃𝐈𝐎 𝐂𝐇𝐄𝐂𝐊\nIntroduce yourself in our <#1491959580173930689> and let us know you've arrived!\n\n\n🌐 **__𝗢𝗨𝗥 𝗣𝗨𝗥𝗣𝗢𝗦𝗘__**\nTo provide the most realistic and professional virtual airline experience, honoring the legacy of the Great North.`
+    )
+    .setColor(15822)
+    .setThumbnail('https://i.postimg.cc/L6GmP9HR/asaksa-new.png')
+    .setFooter({
+      text: 'Fly Smart. Land Safe. | Alaska Airlines Virtual',
+      iconURL: 'https://i.postimg.cc/L6GmP9HR/asaksa-new.png',
+    });
+}
+
 // ─── READY ────────────────────────────────────────────────────────────────────
 client.once(Events.ClientReady, () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
@@ -52,22 +67,13 @@ client.once(Events.ClientReady, () => {
 // ─── WELCOME NEW MEMBERS ──────────────────────────────────────────────────────
 client.on(Events.GuildMemberAdd, async (member) => {
   try {
+    console.log(`👤 Member joined: ${member.user.tag}`);
     const channel = member.guild.channels.cache.get('1491998338630025348');
-    if (!channel) return console.warn('⚠️ Welcome channel not found');
-
-    const welcomeEmbed = new EmbedBuilder()
-      .setTitle('✈️ 𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐭𝐨 𝐀𝐥𝐚𝐬𝐤𝐚 𝐀𝐢𝐫𝐥𝐢𝐧𝐞𝐬 𝐕𝐢𝐫𝐭𝐮𝐚𝐥!')
-      .setDescription(
-        `Welcome aboard <@${member.id}>! We are thrilled to have you join our flight operations. Whether you are a seasoned captain or a new cadet, you've found your home in the skies.\n\nPlease review the pre-flight briefing below to get started.\n\n\n📋 **__𝗣𝗥𝗘-𝗙𝗟𝗜𝗚𝗛𝗧 𝗖𝗛𝗘𝗖𝗞𝗟𝗜𝗦𝗧__**\n\n1. 𝐎𝐏𝐄𝐑𝐀𝐓𝐈𝐍𝐆 𝐏𝐑𝐎𝐂𝐄𝐃𝐔𝐑𝐄𝐒\nHead over to <#1491998338630025348> for more information.\n\n2. 𝐑𝐀𝐃𝐈𝐎 𝐂𝐇𝐄𝐂𝐊\nIntroduce yourself in our <#1491959580173930689> and let us know you've arrived!\n\n\n🌐 **__𝗢𝗨𝗥 𝗣𝗨𝗥𝗣𝗢𝗦𝗘__**\nTo provide the most realistic and professional virtual airline experience, honoring the legacy of the Great North.`
-      )
-      .setColor(15822)
-      .setThumbnail('https://i.postimg.cc/L6GmP9HR/asaksa-new.png')
-      .setFooter({
-        text: 'Fly Smart. Land Safe. | Alaska Airlines Virtual',
-        iconURL: 'https://i.postimg.cc/L6GmP9HR/asaksa-new.png',
-      });
-
-    await channel.send({ embeds: [welcomeEmbed] });
+    if (!channel) {
+      console.warn('⚠️ Welcome channel not found — check channel ID and bot permissions');
+      return;
+    }
+    await channel.send({ embeds: [buildWelcomeEmbed(member.id)] });
     console.log(`✅ Welcome sent for ${member.user.tag}`);
   } catch (err) {
     console.error('❌ Error sending welcome message:', err);
@@ -116,8 +122,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
           { name: "\u200B", value: "\u200B", inline: false },
           { name: "🔖  Status",      value: "Unclaimed",    inline: true },
           { name: "🏷️  Claimed by", value: "*No one yet*", inline: true },
+          { name: "📄  Dispatch Release Number", value: id, inline: false },
         )
-        .setFooter({ text: `Contract ID: ${id}  •  Alaska Systems` })
+        .setFooter({
+          text: 'Alaska Systems+',
+          iconURL: 'https://i.postimg.cc/L6GmP9HR/asaksa-new.png',
+        })
         .setTimestamp();
 
       const button = new ButtonBuilder()
@@ -154,15 +164,37 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     try {
       const { rulesEmbed } = require("./rulesEmbed");
-
-      await interaction.editReply({
-        embeds: [rulesEmbed],
-      });
-
+      await interaction.editReply({ embeds: [rulesEmbed] });
       console.log("✅ RULES POSTED");
     } catch (err) {
       console.error("❌ Error posting rules:", err);
       await safeError(interaction, "Failed to post rules. Please try again.");
+    }
+
+    return;
+  }
+
+  // ── /testwelcome ──────────────────────────────────────────────────────────
+  if (interaction.isChatInputCommand() && interaction.commandName === "testwelcome") {
+    try {
+      await safeDefer(interaction);
+    } catch (err) {
+      console.error("❌ Failed to defer /testwelcome:", err);
+      return;
+    }
+
+    try {
+      const channel = interaction.guild.channels.cache.get('1491998338630025348');
+      if (!channel) {
+        await interaction.editReply({ content: "❌ Welcome channel not found — check the channel ID and bot permissions." });
+        return;
+      }
+      await channel.send({ embeds: [buildWelcomeEmbed(interaction.user.id)] });
+      await interaction.editReply({ content: "✅ Welcome embed sent!", ephemeral: true });
+      console.log("✅ Test welcome sent");
+    } catch (err) {
+      console.error("❌ Error sending test welcome:", err);
+      await safeError(interaction, "Failed to send test welcome.");
     }
 
     return;
@@ -180,7 +212,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
     try {
       const id        = interaction.customId.split("_")[1];
       const claimedBy = `<@${interaction.user.id}>`;
-
       const originalEmbed = interaction.message.embeds[0];
 
       const updatedEmbed = EmbedBuilder.from(originalEmbed)
@@ -199,11 +230,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
         .setStyle(ButtonStyle.Secondary)
         .setDisabled(true);
 
-      const disabledRow = new ActionRowBuilder().addComponents(disabledButton);
-
       await interaction.editReply({
         embeds: [updatedEmbed],
-        components: [disabledRow],
+        components: [new ActionRowBuilder().addComponents(disabledButton)],
       });
 
       console.log(`✅ CONTRACT CLAIMED: ${id} by ${interaction.user.tag}`);
@@ -217,13 +246,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 });
 
 // ─── Graceful shutdown ────────────────────────────────────────────────────────
-process.on("SIGTERM", () => {
-  client.destroy();
-  process.exit(0);
-});
-process.on("SIGINT", () => {
-  client.destroy();
-  process.exit(0);
-});
+process.on("SIGTERM", () => { client.destroy(); process.exit(0); });
+process.on("SIGINT",  () => { client.destroy(); process.exit(0); });
 
 client.login(process.env.TOKEN);

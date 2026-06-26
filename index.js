@@ -156,7 +156,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
   // ── /postrules ────────────────────────────────────────────────────────────
   if (interaction.isChatInputCommand() && interaction.commandName === "postrules") {
     try {
-      await safeDefer(interaction);
+      await interaction.deferReply({ ephemeral: true });
     } catch (err) {
       console.error("❌ Failed to defer /postrules:", err);
       return;
@@ -164,7 +164,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     try {
       const { rulesEmbed } = require("./rulesEmbed");
-      await interaction.editReply({ embeds: [rulesEmbed] });
+      await interaction.channel.send({ embeds: [rulesEmbed] });
+      await interaction.editReply({ content: "✅ Rules posted!" });
       console.log("✅ RULES POSTED");
     } catch (err) {
       console.error("❌ Error posting rules:", err);
@@ -247,7 +248,4 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
 // ─── Graceful shutdown ────────────────────────────────────────────────────────
 process.on("SIGTERM", () => { client.destroy(); process.exit(0); });
-process.on("SIGINT",  () => { client.destroy(); process.exit(0); });
-
-client.login(process.env.TOKEN);
-
+process.on("

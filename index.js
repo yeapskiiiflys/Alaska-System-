@@ -77,14 +77,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
         .setColor(0x0057B8)
         .setThumbnail("https://cdn.discordapp.com/icons/1491959579385528500/651911fada590176e04cbb33eed4a6ea.webp?size=1024")
         .addFields(
-          { name: "🎫  Type",      value: type,             inline: true },
-          { name: "🗺️  Route",    value: formattedRoute,   inline: true },
-          { name: "✈️  Aircraft",  value: aircraft,         inline: true },
-          { name: "💰  Reward",    value: formattedReward,  inline: true },
+          { name: "🎫  Type",      value: type,            inline: true },
+          { name: "🗺️  Route",    value: formattedRoute,  inline: true },
+          { name: "✈️  Aircraft",  value: aircraft,        inline: true },
+          { name: "💰  Reward",    value: formattedReward, inline: true },
         )
         .addFields(
           { name: "\u200B", value: "\u200B", inline: false },
-          { name: "📋  Description", value: description, inline: false },
+          { name: "📋  Description", value: description,   inline: false },
           { name: "\u200B", value: "\u200B", inline: false },
           { name: "🔖  Status",      value: "Unclaimed",    inline: true },
           { name: "🏷️  Claimed by", value: "*No one yet*", inline: true },
@@ -110,6 +110,31 @@ client.on(Events.InteractionCreate, async (interaction) => {
     } catch (err) {
       console.error("❌ Error posting contract:", err);
       await safeError(interaction, "Failed to post contract. Please try again.");
+    }
+
+    return;
+  }
+
+  // ── /postrules ────────────────────────────────────────────────────────────
+  if (interaction.isChatInputCommand() && interaction.commandName === "postrules") {
+    try {
+      await safeDefer(interaction);
+    } catch (err) {
+      console.error("❌ Failed to defer /postrules:", err);
+      return;
+    }
+
+    try {
+      const { rulesEmbed } = require("./rulesEmbed");
+
+      await interaction.editReply({
+        embeds: [rulesEmbed],
+      });
+
+      console.log("✅ RULES POSTED");
+    } catch (err) {
+      console.error("❌ Error posting rules:", err);
+      await safeError(interaction, "Failed to post rules. Please try again.");
     }
 
     return;

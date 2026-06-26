@@ -1,54 +1,64 @@
-// deploy-commands.js
-// Run this ONCE locally (or as a Railway one-off job) to register slash commands.
-// Command: node deploy-commands.js
-//
-// You need these in your .env:
-//   TOKEN=your_bot_token
-//   CLIENT_ID=your_bot_application_id   (from Discord Developer Portal → Your App → General Information)
-//   GUILD_ID=your_server_id             (right-click your server icon → Copy Server ID)
-
-const { REST, Routes, SlashCommandBuilder } = require("discord.js");
-require("dotenv").config();
+require('dotenv').config();
+const { REST, Routes, SlashCommandBuilder } = require('discord.js');
 
 const commands = [
   new SlashCommandBuilder()
-    .setName("postcontract")
-    .setDescription("Post a new flight contract to the server")
-    .addStringOption((opt) =>
-      opt.setName("type").setDescription("Contract type (e.g. Cargo, Passenger)").setRequired(true)
-    )
-    .addStringOption((opt) =>
-      opt.setName("route").setDescription("Flight route (e.g. PANC -> PAJN)").setRequired(true)
-    )
-    .addStringOption((opt) =>
-      opt.setName("aircraft").setDescription("Required aircraft (e.g. C208, B737)").setRequired(true)
-    )
-    .addStringOption((opt) =>
-      opt.setName("description").setDescription("Contract briefing / details").setRequired(true)
-    )
-    .addIntegerOption((opt) =>
-      opt.setName("reward").setDescription("Reward amount").setRequired(true)
-    )
-    .addRoleOption((opt) =>
-      opt.setName("pingrole").setDescription("Role to ping (optional)").setRequired(false)
-    ),
+    .setName('postcontract')
+    .setDescription('Post a custom flight contract')
+    .addStringOption(option =>
+      option.setName('type')
+        .setDescription('Passenger / VIP / Charter / Emergency')
+        .setRequired(true))
+    .addStringOption(option =>
+      option.setName('route')
+        .setDescription('Example: MDPC → LCPH')
+        .setRequired(true))
+    .addStringOption(option =>
+      option.setName('aircraft')
+        .setDescription('Example: B777-300ER')
+        .setRequired(true))
+    .addStringOption(option =>
+      option.setName('description')
+        .setDescription('Flight description')
+        .setRequired(true))
+    .addIntegerOption(option =>
+      option.setName('reward')
+        .setDescription('Reward amount (no $)')
+        .setRequired(true))
+    .addRoleOption(option =>
+      option.setName('pingrole')
+        .setDescription('Role to ping (optional)')
+        .setRequired(false))
+    .addIntegerOption(option =>
+      option.setName('allowedroles')
+        .setDescription('Required level (display only)')
+        .setRequired(false)),
+
+  new SlashCommandBuilder()
+    .setName('postrules')
+    .setDescription('Post the Alaska Airlines Virtual community rules'),
+
 ].map((cmd) => cmd.toJSON());
 
-const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
+if (!process.env.TOKEN) {
+  console.error("❌ TOKEN is missing in .env or Railway variables");
+  process.exit(1);
+}
+
+const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
+
+const CLIENT_ID = '1492387132180926626';
+const GUILD_ID  = '1491959579385528500';
 
 (async () => {
   try {
-    console.log("📡 Registering slash commands...");
-
+    console.log('🚀 Registering slash commands...');
     await rest.put(
-      Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
+      Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
       { body: commands }
     );
-
-    console.log("✅ Slash commands registered successfully.");
-    console.log("   You can now restart your bot and run /postcontract in Discord.");
-  } catch (err) {
-    console.error("❌ Failed to register commands:", err);
-    process.exit(1);
+    console.log('✅ Commands registered successfully!');
+  } catch (error) {
+    console.error('❌ Deploy error:', error);
   }
 })();

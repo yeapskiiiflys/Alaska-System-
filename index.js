@@ -45,9 +45,14 @@ async function safeError(interaction, message) {
 
 function buildWelcomeEmbed(userId) {
   return new EmbedBuilder()
-    .setTitle("\u2708\uFE0F \uD835\uDDFC\uD835\uDDEE\uD835\uDDF9\uD835\uDDF0\uD835\uDDFC\uD835\uDDFA\uD835\uDDF2 \uD835\uDE01\uD835\uDDFC \uD835\uDDFC\uD835\uDDF9\uD835\uDDEE\uD835\uDDF3\uD835\uDDF8\uD835\uDDF2 \uD835\uDDE8\uD835\uDDF6\uD835\uDDFF\uD835\uDDF9\uD835\uDDF6\uD835\uDDF2\uD835\uDDF3\uD835\uDDF9\uD835\uDDF6\uD835\uDDF2\uD835\uDDFF \uD835\uDDE9\uD835\uDDF6\uD835\uDDFF\uD835\uDE01\uD835\uDDFB\uD835\uDDFE\uD835\uDDEE\uD835\uDDF9!")
+    .setTitle("Welcome to Alaska Airlines Virtual!")
     .setDescription(
-      "Welcome aboard <@" + userId + ">! We are thrilled to have you join our flight operations. Whether you are a seasoned captain or a new cadet, you've found your home in the skies.\n\nPlease review the pre-flight briefing below to get started.\n\n\n\uD83D\uDCCB **__\uD835\uDE23\uD835\uDE33\uD835\uDE26-\uD835\uDE1F\uD835\uDE2D\uD835\uDE2D\uD835\uDE15\uD835\uDE29\uD835\uDE1B \uD835\uDE32\uD835\uDE29\uD835\uDE26\uD835\uDE32\uD835\uDE2C\uD835\uDE2D\uD835\uDE2D\uD835\uDE34\uD835\uDE1B__**\n\n1. \uD835\uDDE2\uD835\uDDE3\uD835\uDDD8\uD835\uDDE5\uD835\uDDD4\uD835\uDDE7\uD835\uDDD6\uD835\uDDE1\uD835\uDDda \uD835\uDDE3\uD835\uDDE5\uD835\uDde2\uD835\uDDD6\uD835\uDDD8\uD835\uDDD7\uD835\uDde4\uD835\uDDE5\uD835\uDDD8\uD835\uDDE6\nHead over to <#1491998338630025348> for more information.\n\n2. \uD835\uDDE5\uD835\uDDD4\uD835\uDDD7\uD835\uDDD6\uD835\uDde2 \uD835\uDDD6\uD835\uDddb\uD835\uDDD8\uD835\uDdd6\uD835\uDdd6\nIntroduce yourself in our <#1491959580173930689> and let us know you've arrived!\n\n\n\uD83C\uDF10 **__\uD835\uDE1E\uD835\uDE36\uD835\uDE33 \uD835\uDE31\uD835\uDE36\uD835\uDE33\uD835\uDE31\uD835\uDE30\uD835\uDE34\uD835\uDE26__**\nTo provide the most realistic and professional virtual airline experience, honoring the legacy of the Great North."
+      "Welcome aboard <@" + userId + ">! We are thrilled to have you join our flight operations. Whether you are a seasoned captain or a new cadet, you've found your home in the skies." +
+      "\n\nPlease review the pre-flight briefing below to get started." +
+      "\n\n\n**PRE-FLIGHT CHECKLIST**" +
+      "\n\n1. OPERATING PROCEDURES\nHead over to <#1491998338630025348> for more information." +
+      "\n\n2. RADIO CHECK\nIntroduce yourself in our <#1491959580173930689> and let us know you've arrived!" +
+      "\n\n\n**OUR PURPOSE**\nTo provide the most realistic and professional virtual airline experience, honoring the legacy of the Great North."
     )
     .setColor(15822)
     .setThumbnail("https://i.postimg.cc/L6GmP9HR/asaksa-new.png")
@@ -97,7 +102,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
       const role        = interaction.options.getRole("pingrole");
       const id          = Date.now().toString();
 
-      const formattedRoute  = route.replace(/->|->|->/g, " > ");
       const formattedReward = "$" + reward.toLocaleString("en-US");
 
       const embed = new EmbedBuilder()
@@ -111,12 +115,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
           { name: "Reward",   value: formattedReward, inline: true }
         )
         .addFields(
-          { name: "\u200B",       value: "\u200B",       inline: false },
-          { name: "Description",  value: description,    inline: false },
-          { name: "\u200B",       value: "\u200B",       inline: false },
-          { name: "Status",       value: "Unclaimed",    inline: true  },
-          { name: "Claimed by",   value: "No one yet",   inline: true  },
-          { name: "Dispatch Release Number", value: id,  inline: false }
+          { name: "\u200B",      value: "\u200B",    inline: false },
+          { name: "Description", value: description, inline: false },
+          { name: "\u200B",      value: "\u200B",    inline: false },
+          { name: "Status",      value: "Unclaimed", inline: true  },
+          { name: "Claimed by",  value: "No one yet",inline: true  },
+          { name: "Dispatch Release Number", value: id, inline: false }
         )
         .setFooter({
           text: "Alaska Systems+",
@@ -186,8 +190,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
         .spliceFields(
           originalEmbed.fields.length - 2,
           2,
-          { name: "Status",     value: "Claimed",  inline: true },
-          { name: "Claimed by", value: claimedBy,  inline: true }
+          { name: "Status",     value: "Claimed", inline: true },
+          { name: "Claimed by", value: claimedBy, inline: true }
         )
         .setTimestamp();
 

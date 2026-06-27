@@ -45,14 +45,9 @@ async function safeError(interaction, message) {
 
 function buildWelcomeEmbed(userId) {
   return new EmbedBuilder()
-    .setTitle("Welcome to Alaska Airlines Virtual!")
+    .setTitle("✈️ 𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐭𝐨 𝐀𝐥𝐚𝐬𝐤𝐚 𝐀𝐢𝐫𝐥𝐢𝐧𝐞𝐬 𝐕𝐢𝐫𝐭𝐮𝐚𝐥!")
     .setDescription(
-      "Welcome aboard <@" + userId + ">! We are thrilled to have you join our flight operations. Whether you are a seasoned captain or a new cadet, you've found your home in the skies." +
-      "\n\nPlease review the pre-flight briefing below to get started." +
-      "\n\n\n**PRE-FLIGHT CHECKLIST**" +
-      "\n\n1. OPERATING PROCEDURES\nHead over to <#1491998338630025348> for more information." +
-      "\n\n2. RADIO CHECK\nIntroduce yourself in our <#1491959580173930689> and let us know you've arrived!" +
-      "\n\n\n**OUR PURPOSE**\nTo provide the most realistic and professional virtual airline experience, honoring the legacy of the Great North."
+      "Welcome aboard <@" + userId + ">! We are thrilled to have you join our flight operations. Whether you are a seasoned captain or a new cadet, you've found your home in the skies.\n\nPlease review the pre-flight briefing below to get started.\n\n\n📋 𝗣𝗥𝗘-𝗙𝗟𝗜𝗚𝗛𝗧 𝗖𝗛𝗘𝗖𝗞𝗟𝗜𝗦𝗧\n\n1. 𝐎𝐏𝐄𝐑𝐀𝐓𝐈𝐍𝐆 𝐏𝐑𝐎𝐂𝐄𝐃𝐔𝐑𝐄𝐒\nHead over to <#1491998338630025348> for more information.\n\n2. 𝐑𝐀𝐃𝐈𝐎 𝐂𝐇𝐄𝐂𝐊\nIntroduce yourself in our <#1491959580173930689> and let us know you've arrived!\n\n\n🌐 𝗢𝗨𝗥 𝗣𝗨𝗥𝗣𝗢𝗦𝗘\nTo provide the most realistic and professional virtual airline experience, honoring the legacy of the Great North."
     )
     .setColor(15822)
     .setThumbnail("https://i.postimg.cc/L6GmP9HR/asaksa-new.png")
@@ -66,7 +61,14 @@ client.once(Events.ClientReady, () => {
   console.log("Logged in as " + client.user.tag);
 });
 
+// Duplicate welcome guard
+const recentlyWelcomed = new Set();
+
 client.on(Events.GuildMemberAdd, async (member) => {
+  if (recentlyWelcomed.has(member.id)) return;
+  recentlyWelcomed.add(member.id);
+  setTimeout(() => recentlyWelcomed.delete(member.id), 10_000);
+
   try {
     console.log("Member joined: " + member.user.tag);
     const channel = member.guild.channels.cache.get("1491998338630025348");
@@ -146,27 +148,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
     } catch (err) {
       console.error("Error posting contract:", err);
       await safeError(interaction, "Failed to post contract. Please try again.");
-    }
-
-    return;
-  }
-
-  if (interaction.isChatInputCommand() && interaction.commandName === "postrules") {
-    try {
-      await interaction.deferReply({ ephemeral: true });
-    } catch (err) {
-      console.error("Failed to defer postrules:", err);
-      return;
-    }
-
-    try {
-      const { rulesEmbed } = require("./rulesEmbed");
-      await interaction.channel.send({ embeds: [rulesEmbed] });
-      await interaction.editReply({ content: "Rules posted!" });
-      console.log("RULES POSTED");
-    } catch (err) {
-      console.error("Error posting rules:", err);
-      await safeError(interaction, "Failed to post rules. Please try again.");
     }
 
     return;

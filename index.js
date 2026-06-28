@@ -70,36 +70,20 @@ client.on(Events.GuildMemberAdd, async (member) => {
       return;
     }
 
-    // Check if a welcome was already sent for this user in the last 30 seconds
+    // Wait 5 seconds so old Railway instance has time to shut down
+    await new Promise(function(resolve) { setTimeout(resolve, 5000); });
+
+    // Check last 10 messages — if welcome already sent in last 30s, skip
     const recent = await channel.messages.fetch({ limit: 10 });
     const alreadySent = recent.some(function(msg) {
       if (!msg.author.bot) return false;
       if (!msg.embeds.length) return false;
-      const embed = msg.embeds[0];
       const age = Date.now() - msg.createdTimestamp;
-      return age < 30000 && embed.description && embed.description.includes("<@" + member.id + ">");
+      return age < 30000 && msg.embeds[0].description && msg.embeds[0].description.includes("<@" + member.id + ">");
     });
 
     if (alreadySent) {
       console.log("Welcome already sent for " + member.user.tag + " — skipping duplicate");
-      return;
-    }
-
-    // Wait 5 seconds so any old Railway instance has time to shut down
-    await new Promise(function(resolve) { setTimeout(resolve, 5000); });
-
-    // Check again after the delay in case the old instance already sent it
-    const recheck = await channel.messages.fetch({ limit: 10 });
-    const alreadySentNow = recheck.some(function(msg) {
-      if (!msg.author.bot) return false;
-      if (!msg.embeds.length) return false;
-      const embed = msg.embeds[0];
-      const age = Date.now() - msg.createdTimestamp;
-      return age < 30000 && embed.description && embed.description.includes("<@" + member.id + ">");
-    });
-
-    if (alreadySentNow) {
-      console.log("Welcome already sent after delay for " + member.user.tag + " — skipping");
       return;
     }
 
@@ -190,4 +174,24 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     try {
       const id        = interaction.customId.split("_")[1];
-      const claimedBy = "<@" + interaction.user.id + 
+      const claimedBy = "<@" + interaction.user.id + ">";
+      const originalEmbed = interaction.message.embeds[0];
+
+      const updatedEmbed = EmbedBuilder.from(originalEmbed)
+        .setColor(0x2ECC71)
+        .spliceFields(
+          originalEmbed.fields.length - 2,
+          2,
+          { name: "Status",     value: "Claimed", inline: true },
+          { name: "Claimed by", value: claimedBy, inline: true }
+        )
+        .setTimestamp();
+
+      const disabledButton = new ButtonBuilder()
+        .setCustomId("claimed_disabled")
+        .setLabel("CLAIMED")
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(true);
+
+      await interaction.editReply({
+        embeds: [updatedEm

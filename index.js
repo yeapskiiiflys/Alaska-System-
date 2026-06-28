@@ -45,9 +45,9 @@ async function safeError(interaction, message) {
 
 function buildWelcomeEmbed(userId) {
   return new EmbedBuilder()
-    .setTitle("✈️ 𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐭𝐨 𝐀𝐥𝐚𝐬𝐤𝐚 𝐀𝐢𝐫𝐥𝐢𝐧𝐞𝐬 𝐕𝐢𝐫𝐭𝐮𝐚𝐥!")
+    .setTitle("\u2708\uFE0F \u1D416\u1D41E\u1D425\u1D41C\u1D428\u1D426\u1D41E \u1D42D\u1D428 \u1D400\u1D425\u1D41A\u1D42C\u1D424\u1D41A \u1D400\u1D422\u1D42B\u1D425\u1D422\u1D427\u1D41E\u1D42C \u1D415\u1D422\u1D42B\u1D42D\u1D42E\u1D41A\u1D425!")
     .setDescription(
-      "Welcome aboard <@" + userId + ">! We are thrilled to have you join our flight operations. Whether you are a seasoned captain or a new cadet, you've found your home in the skies.\n\nPlease review the pre-flight briefing below to get started.\n\n\n📋 **__𝗣𝗥𝗘-𝗙𝗟𝗜𝗚𝗛𝗧 𝗖𝗛𝗘𝗖𝗞𝗟𝗜𝗦𝗧__**\n\n1. 𝐎𝐏𝐄𝐑𝐀𝐓𝐈𝐍𝐆 𝐏𝐑𝐎𝐂𝐄𝐃𝐔𝐑𝐄𝐒\nHead over to <#1491998338630025348> for more information.\n\n2. 𝐑𝐀𝐃𝐈𝐎 𝐂𝐇𝐄𝐂𝐊\nIntroduce yourself in our <#1491959580173930689> and let us know you've arrived!\n\n\n🌐 **__𝗢𝗨𝗥 𝗣𝗨𝗥𝗣𝗢𝗦𝗘__**\nTo provide the most realistic and professional virtual airline experience, honoring the legacy of the Great North."
+      "Welcome aboard <@" + userId + ">! We are thrilled to have you join our flight operations. Whether you are a seasoned captain or a new cadet, you've found your home in the skies.\n\nPlease review the pre-flight briefing below to get started.\n\n\n\u1F4CB **__\u1D5E3\u1D5E5\u1D5D8-\u1D5D9\u1D5DF\u1D5DC\u1D5DA\u1D5DB\u1D5E7 \u1D5D6\u1D5DB\u1D5D8\u1D5D6\u1D5DE\u1D5DF\u1D5DC\u1D5E6\u1D5E7__**\n\n1. \u1D40E\u1D40F\u1D404\u1D411\u1D400\u1D413\u1D408\u1D40D\u1D406 \u1D40F\u1D411\u1D40E\u1D402\u1D404\u1D403\u1D414\u1D411\u1D404\u1D412\nHead over to <#1491998338630025348> for more information.\n\n2. \u1D411\u1D400\u1D403\u1D408\u1D40E \u1D402\u1D407\u1D404\u1D402\u1D40A\nIntroduce yourself in our <#1491959580173930689> and let us know you've arrived!\n\n\n\u1F310 **__\u1D5E2\u1D5E8\u1D5E5 \u1D5E3\u1D5E8\u1D5E5\u1D5E3\u1D5E2\u1D5E6\u1D5D8__**\nTo provide the most realistic and professional virtual airline experience, honoring the legacy of the Great North."
     )
     .setColor(15822)
     .setThumbnail("https://i.postimg.cc/L6GmP9HR/asaksa-new.png")
@@ -73,7 +73,7 @@ client.on(Events.GuildMemberAdd, async (member) => {
     // Wait 5 seconds so old Railway instance has time to shut down
     await new Promise(function(resolve) { setTimeout(resolve, 5000); });
 
-    // Check last 10 messages — if welcome already sent in last 30s, skip
+    // Check last 10 messages - if welcome already sent in last 30s, skip
     const recent = await channel.messages.fetch({ limit: 10 });
     const alreadySent = recent.some(function(msg) {
       if (!msg.author.bot) return false;
@@ -83,7 +83,7 @@ client.on(Events.GuildMemberAdd, async (member) => {
     });
 
     if (alreadySent) {
-      console.log("Welcome already sent for " + member.user.tag + " — skipping duplicate");
+      console.log("Welcome already sent for " + member.user.tag + " - skipping duplicate");
       return;
     }
 
@@ -180,18 +180,4 @@ client.on(Events.InteractionCreate, async (interaction) => {
       const updatedEmbed = EmbedBuilder.from(originalEmbed)
         .setColor(0x2ECC71)
         .spliceFields(
-          originalEmbed.fields.length - 2,
-          2,
-          { name: "Status",     value: "Claimed", inline: true },
-          { name: "Claimed by", value: claimedBy, inline: true }
-        )
-        .setTimestamp();
-
-      const disabledButton = new ButtonBuilder()
-        .setCustomId("claimed_disabled")
-        .setLabel("CLAIMED")
-        .setStyle(ButtonStyle.Secondary)
-        .setDisabled(true);
-
-      await interaction.editReply({
-        embeds: [updatedEm
+          originalE

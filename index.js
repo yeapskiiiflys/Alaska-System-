@@ -11,6 +11,8 @@ require("dotenv").config();
 
 console.log("ALASKA SYSTEMS CONTRACT BOT ONLINE");
 
+const ALLOWED_GUILD = "1491959579385528500";
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -43,11 +45,11 @@ async function safeError(interaction, message) {
   } catch (e) {}
 }
 
-var WELCOME_TITLE = "\u2708\uFE0F \uD835\uDC16\uD835\uDC1E\uD835\uDC25\uD835\uDC1C\uD835\uDC28\uD835\uDC26\uD835\uDC1E \uD835\uDC2D\uD835\uDC28 \uD835\uDC00\uD835\uDC25\uD835\uDC1A\uD835\uDC2C\uD835\uDC24\uD835\uDC1A \uD835\uDC00\uD835\uDC22\uD835\uDC2B\uD835\uDC25\uD835\uDC22\uD835\uDC27\uD835\uDC1E\uD835\uDC2C \uD835\uDC15\uD835\uDC22\uD835\uDC2B\uD835\uDC2D\uD835\uDC2E\uD835\uDC1A\uD835\uDC25!";
+var WELCOME_TITLE  = "\u2708\uFE0F \uD835\uDC16\uD835\uDC1E\uD835\uDC25\uD835\uDC1C\uD835\uDC28\uD835\uDC26\uD835\uDC1E \uD835\uDC2D\uD835\uDC28 \uD835\uDC00\uD835\uDC25\uD835\uDC1A\uD835\uDC2C\uD835\uDC24\uD835\uDC1A \uD835\uDC00\uD835\uDC22\uD835\uDC2B\uD835\uDC25\uD835\uDC22\uD835\uDC27\uD835\uDC1E\uD835\uDC2C \uD835\uDC15\uD835\uDC22\uD835\uDC2B\uD835\uDC2D\uD835\uDC2E\uD835\uDC1A\uD835\uDC25!";
 var CHECKLIST_HEAD = "\uD83D\uDCCB **__\uD835\uDDE3\uD835\uDDE5\uD835\uDDD8-\uD835\uDDD9\uD835\uDDDF\uD835\uDDDC\uD835\uDDDA\uD835\uDDDB\uD835\uDDE7 \uD835\uDDD6\uD835\uDDDB\uD835\uDDD8\uD835\uDDD6\uD835\uDDDE\uD835\uDDDF\uD835\uDDDC\uD835\uDDE6\uD835\uDDE7__**";
-var OP_PROCEDURES = "\uD835\uDC0E\uD835\uDC0F\uD835\uDC04\uD835\uDC11\uD835\uDC00\uD835\uDC13\uD835\uDC08\uD835\uDC0D\uD835\uDC06 \uD835\uDC0F\uD835\uDC11\uD835\uDC0E\uD835\uDC02\uD835\uDC04\uD835\uDC03\uD835\uDC14\uD835\uDC11\uD835\uDC04\uD835\uDC12";
-var RADIO_CHECK   = "\uD835\uDC11\uD835\uDC00\uD835\uDC03\uD835\uDC08\uD835\uDC0E \uD835\uDC02\uD835\uDC07\uD835\uDC04\uD835\uDC02\uD835\uDC0A";
-var OUR_PURPOSE   = "\uD83C\uDF10 **__\uD835\uDDE2\uD835\uDDE8\uD835\uDDE5 \uD835\uDDE3\uD835\uDDE8\uD835\uDDE5\uD835\uDDE3\uD835\uDDE2\uD835\uDDE6\uD835\uDDD8__**";
+var OP_PROCEDURES  = "\uD835\uDC0E\uD835\uDC0F\uD835\uDC04\uD835\uDC11\uD835\uDC00\uD835\uDC13\uD835\uDC08\uD835\uDC0D\uD835\uDC06 \uD835\uDC0F\uD835\uDC11\uD835\uDC0E\uD835\uDC02\uD835\uDC04\uD835\uDC03\uD835\uDC14\uD835\uDC11\uD835\uDC04\uD835\uDC12";
+var RADIO_CHECK    = "\uD835\uDC11\uD835\uDC00\uD835\uDC03\uD835\uDC08\uD835\uDC0E \uD835\uDC02\uD835\uDC07\uD835\uDC04\uD835\uDC02\uD835\uDC0A";
+var OUR_PURPOSE    = "\uD83C\uDF10 **__\uD835\uDDE2\uD835\uDDE8\uD835\uDDE5 \uD835\uDDE3\uD835\uDDE8\uD835\uDDE5\uD835\uDDE3\uD835\uDDE2\uD835\uDDE6\uD835\uDDD8__**";
 
 function buildWelcomeEmbed(userId) {
   var desc =
@@ -71,6 +73,22 @@ function buildWelcomeEmbed(userId) {
 
 client.once(Events.ClientReady, () => {
   console.log("Logged in as " + client.user.tag);
+
+  // Leave any server that is not the Alaska Airlines Virtual server
+  client.guilds.cache.forEach(function(guild) {
+    if (guild.id !== ALLOWED_GUILD) {
+      console.log("Leaving unauthorized server: " + guild.name);
+      guild.leave();
+    }
+  });
+});
+
+// Auto-leave any server the bot gets added to in the future
+client.on(Events.GuildCreate, function(guild) {
+  if (guild.id !== ALLOWED_GUILD) {
+    console.log("Joined unauthorized server, leaving: " + guild.name);
+    guild.leave();
+  }
 });
 
 client.on(Events.GuildMemberAdd, async (member) => {

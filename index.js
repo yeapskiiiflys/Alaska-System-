@@ -11,7 +11,27 @@ require("dotenv").config();
 
 console.log("ALASKA SYSTEMS CONTRACT BOT ONLINE");
 
-const ALLOWED_GUILD = "1491959579385528500";
+const ALLOWED_GUILD   = "1491959579385528500";
+const LOGBOOK_CHANNEL = "1492025670384095282";
+
+// Roles allowed to log flights (Trainee Pilot or higher)
+// Add role IDs here — anyone with ANY of these roles can log
+const ALLOWED_ROLE_NAMES = [
+  "trainee pilot",
+  "cadet pilot",
+  "first officer",
+  "captain",
+  "senior captain",
+  "chief pilot",
+  "management",
+  "staff",
+  "admin",
+  "moderator",
+];
+
+// In-memory flight log store (resets on bot restart)
+// For persistent storage you would need a database
+const flightLogs = {};
 
 const client = new Client({
   intents: [
@@ -45,6 +65,12 @@ async function safeError(interaction, message) {
   } catch (e) {}
 }
 
+function hasAllowedRole(member) {
+  return member.roles.cache.some(function(role) {
+    return ALLOWED_ROLE_NAMES.includes(role.name.toLowerCase());
+  });
+}
+
 var WELCOME_TITLE  = "\u2708\uFE0F \uD835\uDC16\uD835\uDC1E\uD835\uDC25\uD835\uDC1C\uD835\uDC28\uD835\uDC26\uD835\uDC1E \uD835\uDC2D\uD835\uDC28 \uD835\uDC00\uD835\uDC25\uD835\uDC1A\uD835\uDC2C\uD835\uDC24\uD835\uDC1A \uD835\uDC00\uD835\uDC22\uD835\uDC2B\uD835\uDC25\uD835\uDC22\uD835\uDC27\uD835\uDC1E\uD835\uDC2C \uD835\uDC15\uD835\uDC22\uD835\uDC2B\uD835\uDC2D\uD835\uDC2E\uD835\uDC1A\uD835\uDC25!";
 var CHECKLIST_HEAD = "\uD83D\uDCCB **__\uD835\uDDE3\uD835\uDDE5\uD835\uDDD8-\uD835\uDDD9\uD835\uDDDF\uD835\uDDDC\uD835\uDDDA\uD835\uDDDB\uD835\uDDE7 \uD835\uDDD6\uD835\uDDDB\uD835\uDDD8\uD835\uDDD6\uD835\uDDDE\uD835\uDDDF\uD835\uDDDC\uD835\uDDE6\uD835\uDDE7__**";
 var OP_PROCEDURES  = "\uD835\uDC0E\uD835\uDC0F\uD835\uDC04\uD835\uDC11\uD835\uDC00\uD835\uDC13\uD835\uDC08\uD835\uDC0D\uD835\uDC06 \uD835\uDC0F\uD835\uDC11\uD835\uDC0E\uD835\uDC02\uD835\uDC04\uD835\uDC03\uD835\uDC14\uD835\uDC11\uD835\uDC04\uD835\uDC12";
@@ -74,7 +100,6 @@ function buildWelcomeEmbed(userId) {
 client.once(Events.ClientReady, () => {
   console.log("Logged in as " + client.user.tag);
 
-  // Leave any server that is not the Alaska Airlines Virtual server
   client.guilds.cache.forEach(function(guild) {
     if (guild.id !== ALLOWED_GUILD) {
       console.log("Leaving unauthorized server: " + guild.name);
@@ -83,7 +108,6 @@ client.once(Events.ClientReady, () => {
   });
 });
 
-// Auto-leave any server the bot gets added to in the future
 client.on(Events.GuildCreate, function(guild) {
   if (guild.id !== ALLOWED_GUILD) {
     console.log("Joined unauthorized server, leaving: " + guild.name);
@@ -95,15 +119,10 @@ client.on(Events.GuildMemberAdd, async (member) => {
   try {
     console.log("Member joined: " + member.user.tag);
     const channel = member.guild.channels.cache.get("1491998338630025348");
-    if (!channel) {
-      console.warn("Welcome channel not found");
-      return;
-    }
+    if (!channel) { console.warn("Welcome channel not found"); return; }
 
-    // Wait 5 seconds so old Railway instance has time to shut down
     await new Promise(function(resolve) { setTimeout(resolve, 5000); });
 
-    // Check last 10 messages - if welcome already sent in last 30s, skip
     const recent = await channel.messages.fetch({ limit: 10 });
     const alreadySent = recent.some(function(msg) {
       if (!msg.author.bot) return false;
@@ -112,10 +131,7 @@ client.on(Events.GuildMemberAdd, async (member) => {
       return age < 30000 && msg.embeds[0].description && msg.embeds[0].description.includes("<@" + member.id + ">");
     });
 
-    if (alreadySent) {
-      console.log("Welcome already sent for " + member.user.tag + " - skipping duplicate");
-      return;
-    }
+    if (alreadySent) { console.log("Welcome already sent - skipping"); return; }
 
     await channel.send({ embeds: [buildWelcomeEmbed(member.id)] });
     console.log("Welcome sent for " + member.user.tag);
@@ -128,13 +144,115 @@ client.on(Events.InteractionCreate, async (interaction) => {
   if (handledInteractions.has(interaction.id)) return;
   markHandled(interaction.id);
 
-  if (interaction.isChatInputCommand() && interaction.commandName === "postcontract") {
+  // ── /logflight ────────────────────────────────────────────────────────────
+  if (interaction.isChatInputCommand() && interaction.commandName === "logflight") {
+    try { await safeDefer(interaction); } catch (err) { return; }
+
     try {
-      await safeDefer(interaction);
+      // Check role
+      if (!hasAllowedRole(interaction.member)) {
+        await interaction.editReply({ content: "You need to be a Trainee Pilot or higher to log flights.", ephemeral: true });
+        return;
+      }
+
+      const callsign    = interaction.options.getString("callsign")    || "N/A";
+      const aircraft    = interaction.options.getString("aircraft")    || "N/A";
+      const departure   = interaction.options.getString("departure")   || "N/A";
+      const arrival     = interaction.options.getString("arrival")     || "N/A";
+      const route       = interaction.options.getString("route")       || "N/A";
+      const screenshot  = interaction.options.getString("screenshot")  || null;
+      const remarks     = interaction.options.getString("remarks")     || "None";
+      const contract_id = interaction.options.getString("contract_id") || "N/A";
+      const userId      = interaction.user.id;
+      const logId       = Date.now().toString();
+      const timestamp   = new Date().toUTCString();
+
+      // Save to memory
+      if (!flightLogs[userId]) flightLogs[userId] = { tag: interaction.user.tag, flights: 0 };
+      flightLogs[userId].flights += 1;
+      flightLogs[userId].tag = interaction.user.tag;
+
+      // Build log embed
+      const logEmbed = new EmbedBuilder()
+        .setTitle("Flight Log Entry")
+        .setColor(0x0057B8)
+        .setThumbnail("https://i.postimg.cc/L6GmP9HR/asaksa-new.png")
+        .addFields(
+          { name: "Pilot",       value: "<@" + userId + ">",          inline: true },
+          { name: "Callsign",    value: callsign,                      inline: true },
+          { name: "Aircraft",    value: aircraft,                      inline: true },
+          { name: "Departure",   value: departure,                     inline: true },
+          { name: "Arrival",     value: arrival,                       inline: true },
+          { name: "Route",       value: route,                         inline: false },
+          { name: "Contract ID", value: contract_id,                   inline: true },
+          { name: "Remarks",     value: remarks,                       inline: false },
+          { name: "Total Flights", value: String(flightLogs[userId].flights), inline: true },
+          { name: "Log ID",      value: logId,                         inline: true }
+        )
+        .setFooter({ text: "Alaska Systems+  |  " + timestamp, iconURL: "https://i.postimg.cc/L6GmP9HR/asaksa-new.png" });
+
+      if (screenshot) logEmbed.setImage(screenshot);
+
+      // Post to logbook channel
+      const logChannel = interaction.guild.channels.cache.get(LOGBOOK_CHANNEL);
+      if (logChannel) {
+        await logChannel.send({ embeds: [logEmbed] });
+      }
+
+      await interaction.editReply({ content: "Flight logged successfully! Check <#" + LOGBOOK_CHANNEL + ">.", ephemeral: true });
+      console.log("FLIGHT LOGGED: " + interaction.user.tag + " - " + departure + " to " + arrival);
     } catch (err) {
-      console.error("Failed to defer:", err);
-      return;
+      console.error("Error logging flight:", err);
+      await safeError(interaction, "Failed to log flight. Please try again.");
     }
+
+    return;
+  }
+
+  // ── /leaderboard ──────────────────────────────────────────────────────────
+  if (interaction.isChatInputCommand() && interaction.commandName === "leaderboard") {
+    try { await safeDefer(interaction); } catch (err) { return; }
+
+    try {
+      const sorted = Object.entries(flightLogs)
+        .sort(function(a, b) { return b[1].flights - a[1].flights; })
+        .slice(0, 10);
+
+      if (sorted.length === 0) {
+        await interaction.editReply({ content: "No flights have been logged yet!" });
+        return;
+      }
+
+      const medals = ["🥇", "🥈", "🥉"];
+      var board = "";
+      sorted.forEach(function(entry, i) {
+        var userId = entry[0];
+        var data   = entry[1];
+        var medal  = medals[i] || (i + 1) + ".";
+        board += medal + " <@" + userId + "> — **" + data.flights + "** flight" + (data.flights === 1 ? "" : "s") + "\n";
+      });
+
+      const embed = new EmbedBuilder()
+        .setTitle("Alaska Airlines Virtual — Pilot Leaderboard")
+        .setDescription(board)
+        .setColor(0x0057B8)
+        .setThumbnail("https://i.postimg.cc/L6GmP9HR/asaksa-new.png")
+        .setFooter({ text: "Alaska Systems+  |  Ranked by total flights logged", iconURL: "https://i.postimg.cc/L6GmP9HR/asaksa-new.png" })
+        .setTimestamp();
+
+      await interaction.editReply({ embeds: [embed] });
+      console.log("LEADERBOARD SHOWN");
+    } catch (err) {
+      console.error("Error showing leaderboard:", err);
+      await safeError(interaction, "Failed to show leaderboard.");
+    }
+
+    return;
+  }
+
+  // ── /postcontract ─────────────────────────────────────────────────────────
+  if (interaction.isChatInputCommand() && interaction.commandName === "postcontract") {
+    try { await safeDefer(interaction); } catch (err) { return; }
 
     try {
       const type        = interaction.options.getString("type")        || "N/A";
@@ -165,10 +283,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
           { name: "Claimed by",  value: "No one yet",inline: true  },
           { name: "Dispatch Release Number", value: id, inline: false }
         )
-        .setFooter({
-          text: "Alaska Systems+",
-          iconURL: "https://i.postimg.cc/L6GmP9HR/asaksa-new.png",
-        })
+        .setFooter({ text: "Alaska Systems+", iconURL: "https://i.postimg.cc/L6GmP9HR/asaksa-new.png" })
         .setTimestamp();
 
       const button = new ButtonBuilder()
@@ -176,31 +291,25 @@ client.on(Events.InteractionCreate, async (interaction) => {
         .setLabel("CLAIM CONTRACT")
         .setStyle(ButtonStyle.Success);
 
-      const row = new ActionRowBuilder().addComponents(button);
-
       await interaction.editReply({
         content: role ? "<@&" + role.id + ">" : undefined,
         allowedMentions: role ? { roles: [role.id] } : { parse: [] },
         embeds: [embed],
-        components: [row],
+        components: [new ActionRowBuilder().addComponents(button)],
       });
 
       console.log("CONTRACT POSTED: " + id);
     } catch (err) {
       console.error("Error posting contract:", err);
-      await safeError(interaction, "Failed to post contract. Please try again.");
+      await safeError(interaction, "Failed to post contract.");
     }
 
     return;
   }
 
+  // ── Claim button ──────────────────────────────────────────────────────────
   if (interaction.isButton() && interaction.customId.startsWith("claim_")) {
-    try {
-      await safeDeferUpdate(interaction);
-    } catch (err) {
-      console.error("Failed to defer button:", err);
-      return;
-    }
+    try { await safeDeferUpdate(interaction); } catch (err) { return; }
 
     try {
       const id        = interaction.customId.split("_")[1];
@@ -231,7 +340,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       console.log("CONTRACT CLAIMED: " + id + " by " + interaction.user.tag);
     } catch (err) {
       console.error("Error claiming contract:", err);
-      await safeError(interaction, "Failed to claim contract. Please try again.");
+      await safeError(interaction, "Failed to claim contract.");
     }
 
     return;
